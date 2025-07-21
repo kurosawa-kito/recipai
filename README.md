@@ -4,7 +4,7 @@
 
 ## 開発環境セットアップ手順
 
-1. このリポジトリをクローンあああ
+1. このリポジトリをクローン
 
    ```bash
    git clone https://github.com/kurosawa-kito/recipai.git
@@ -34,7 +34,6 @@
    ```
 
 5. 開発サーバー起動
-
    ```bash
    yarn dev
    # または npm run dev
