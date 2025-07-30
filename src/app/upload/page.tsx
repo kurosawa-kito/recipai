@@ -98,21 +98,22 @@ export default function UploadPage() {
           onChange={async (e) => {
             const files = e.target.files;
             if (!files || files.length === 0) return;
-            // 複数画像をFormDataでAPIに送信
-            const formData = new FormData();
-            Array.from(files).forEach((file) => {
-              formData.append("files", file);
-            });
-            // /api/analyze-imageにPOST
-            const res = await fetch("/api/analyze-image", {
-              method: "POST",
-              body: formData,
-            });
-            const data = await res.json();
+            // 1枚ずつblobにアップロード
+            const uploadedUrls: string[] = [];
+            for (const file of Array.from(files)) {
+              const res = await fetch(
+                `/api/analyze-image?filename=${encodeURIComponent(file.name)}`,
+                {
+                  method: "POST",
+                  body: file,
+                }
+              );
+              const data = await res.json();
+              uploadedUrls.push(data.url);
+            }
             // 画像プレビュー（1枚目のみ表示例）
-            const url = URL.createObjectURL(files[0]);
-            setImages((prev) => [url, ...prev.slice(1)]);
-            // 必要に応じてdata.ingredients等を利用
+            setImages((prev) => [uploadedUrls[0], ...prev.slice(1)]);
+            // 必要に応じてuploadedUrlsを利用
           }}
         />
         <button
@@ -123,6 +124,21 @@ export default function UploadPage() {
         >
           写真を選ぶ
         </button>
+        {/* 選択済み画像のサムネイル表示 */}
+        <div className="flex gap-2 mt-3 mb-2 w-full overflow-x-auto">
+          {images.filter(Boolean).map((img, idx) => (
+            <div
+              key={idx}
+              className="w-16 h-16 rounded overflow-hidden border bg-gray-100 flex items-center justify-center"
+            >
+              <img
+                src={img}
+                alt={`選択画像${idx + 1}`}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          ))}
+        </div>
         {/* レシピ候補を表示するボタン */}
         <button
           className="w-64 max-w-full bg-yellow-400 text-white rounded-lg py-3 mt-6 font-bold text-lg hover:bg-yellow-500 transition"
