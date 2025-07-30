@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// 画像解析API（Python FastAPI連携）
 export async function POST(req: NextRequest) {
-  const { imageUrl } = await req.json();
-  // Python API（FastAPI）に画像URLをPOST
-  const pyRes = await fetch("http://localhost:8000/analyze", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ imageUrl }),
-  });
-  const data = await pyRes.json();
-  return NextResponse.json(data);
+  const formData = await req.formData();
+  const files = formData.getAll("files");
+  const uploadedUrls: string[] = [];
+  for (const file of files) {
+    if (file instanceof File) {
+      const { upload } = await import("@vercel/blob/client");
+      const { url } = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "",
+      });
+      uploadedUrls.push(url);
+    }
+  }
+  return NextResponse.json({ urls: uploadedUrls });
 }

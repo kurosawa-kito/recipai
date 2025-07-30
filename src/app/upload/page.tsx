@@ -53,10 +53,74 @@ export default function UploadPage() {
         <div className="bg-gray-100 rounded-full p-6 mb-6">
           <span className="text-5xl">📷</span>
         </div>
-        <button className="w-64 max-w-full bg-blue-600 text-white rounded-lg py-3 mb-3 font-bold text-lg hover:bg-blue-700 transition">
+        {/* 冷蔵庫を撮るボタンとinput[type=file]（カメラ起動・複数可） */}
+        <input
+          id="cameraInput"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          style={{ display: "none" }}
+          onChange={async (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            // 複数画像をFormDataでAPIに送信
+            const formData = new FormData();
+            Array.from(files).forEach((file) => {
+              formData.append("files", file);
+            });
+            const res = await fetch("/api/analyze-image", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await res.json();
+            // 画像プレビュー（1枚目のみ表示例）
+            const url = URL.createObjectURL(files[0]);
+            setImages((prev) => [url, ...prev.slice(1)]);
+            // 必要に応じてdata.ingredients等を利用
+          }}
+        />
+        <button
+          className="w-64 max-w-full bg-blue-600 text-white rounded-lg py-3 mb-3 font-bold text-lg hover:bg-blue-700 transition"
+          onClick={() => {
+            document.getElementById("cameraInput")?.click();
+          }}
+        >
           冷蔵庫を撮る
         </button>
-        <button className="w-64 max-w-full bg-gray-200 text-gray-700 rounded-lg py-3 font-bold text-lg hover:bg-gray-300 transition">
+        {/* 写真を選ぶボタンとinput[type=file] */}
+        <input
+          id="fileInput"
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={async (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            // 複数画像をFormDataでAPIに送信
+            const formData = new FormData();
+            Array.from(files).forEach((file) => {
+              formData.append("files", file);
+            });
+            // /api/analyze-imageにPOST
+            const res = await fetch("/api/analyze-image", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await res.json();
+            // 画像プレビュー（1枚目のみ表示例）
+            const url = URL.createObjectURL(files[0]);
+            setImages((prev) => [url, ...prev.slice(1)]);
+            // 必要に応じてdata.ingredients等を利用
+          }}
+        />
+        <button
+          className="w-64 max-w-full bg-gray-200 text-gray-700 rounded-lg py-3 font-bold text-lg hover:bg-gray-300 transition"
+          onClick={() => {
+            document.getElementById("fileInput")?.click();
+          }}
+        >
           写真を選ぶ
         </button>
         {/* レシピ候補を表示するボタン */}
