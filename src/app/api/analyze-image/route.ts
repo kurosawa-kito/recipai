@@ -1,18 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const files = formData.getAll("files");
-  const uploadedUrls: string[] = [];
-  for (const file of files) {
-    if (file instanceof File) {
-      const { upload } = await import("@vercel/blob/client");
-      const { url } = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "",
-      });
-      uploadedUrls.push(url);
-    }
+export async function POST(request: Request): Promise<NextResponse> {
+  const { searchParams } = new URL(request.url);
+  const filename = searchParams.get("filename");
+  if (!filename) {
+    return NextResponse.json(
+      { error: "filename is required" },
+      { status: 400 }
+    );
   }
-  return NextResponse.json({ urls: uploadedUrls });
+
+  if (!request.body) {
+    return NextResponse.json(
+      { error: "file body is required" },
+      { status: 400 }
+    );
+  }
+
+  const blob = await put(`recipes/${filename}`, request.body, {
+    access: "public",
+  });
+
+  return NextResponse.json(blob);
 }
