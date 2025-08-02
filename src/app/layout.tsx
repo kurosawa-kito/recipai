@@ -2,6 +2,7 @@
 import { Inter } from "next/font/google";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
+import ReloadAndBackHandler from "@/components/ReloadAndBackHandler";
 import { usePathname } from "next/navigation";
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={inter.className}>
+        {/* <ReloadAndBackHandler /> */}
         {pathname !== "/" && pathname !== "/login" && <AppHeader />}
         <div
           className={

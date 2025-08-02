@@ -1,12 +1,14 @@
 "use client";
-import BottomNav from "@/components/BottomNav";
-
 import { useState } from "react";
+import AppHeader from "@/components/AppHeader";
+import BottomNav from "@/components/BottomNav";
 import Link from "next/link";
+import withAuth from "@/components/withAuth";
 
-export default function HistoryPage() {
+function HistoryPage() {
   const [keyword, setKeyword] = useState("");
   const [showFavorite, setShowFavorite] = useState(false);
+
   // 仮データ
   const recipes = [
     {
@@ -33,7 +35,8 @@ export default function HistoryPage() {
   );
   return (
     <main className="flex flex-col min-h-screen pb-16 bg-white">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6">
+      <AppHeader />
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6 pt-20">
         <h1 className="text-2xl font-bold mb-4">履歴</h1>
         <div className="flex gap-2 mb-4">
           <input
@@ -74,3 +77,5 @@ export default function HistoryPage() {
     </main>
   );
 }
+
+export default withAuth(HistoryPage);

@@ -1,10 +1,13 @@
 "use client";
+import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
+import withAuth from "@/components/withAuth";
 
-export default function FavoritesPage() {
+function FavoritesPage() {
   return (
     <main className="flex flex-col min-h-screen pb-16 bg-white sm:bg-gray-50">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6">
+      <AppHeader />
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6 pt-20">
         <h1 className="text-2xl font-bold mb-4">お気に入りレシピ</h1>
         {/* カテゴリ分けUIは後で追加 */}
         <ul className="space-y-4">
@@ -22,3 +25,5 @@ export default function FavoritesPage() {
     </main>
   );
 }
+
+export default withAuth(FavoritesPage);

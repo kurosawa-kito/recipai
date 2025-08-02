@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
+import withAuth from "@/components/withAuth";
 
-export default function IngredientsPage() {
+function IngredientsPage() {
   // 仮のAI認識済み食材リスト
   const [ingredients, setIngredients] = useState(["たまご", "牛乳", "トマト"]);
   const [input, setInput] = useState("");
@@ -29,7 +31,8 @@ export default function IngredientsPage() {
 
   return (
     <main className="flex flex-col min-h-screen pb-16 bg-white sm:bg-gray-50">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6">
+      <AppHeader />
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6 pt-20">
         <h1 className="text-2xl font-bold mb-4">食材リスト編集</h1>
         <ul className="mb-4">
           {ingredients.map((item, idx) => (
@@ -76,3 +79,5 @@ export default function IngredientsPage() {
     </main>
   );
 }
+
+export default withAuth(IngredientsPage);

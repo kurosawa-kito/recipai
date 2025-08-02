@@ -1,4 +1,5 @@
 "use client";
+import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
 import { useState } from "react";
 import Link from "next/link";
@@ -42,7 +43,8 @@ export default function SearchPage() {
   );
   return (
     <main className="flex flex-col min-h-screen pb-16 bg-white">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6">
+      <AppHeader />
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6 pt-20">
         <h1 className="text-2xl font-bold mb-4">レシピ検索</h1>
         <input
           className="border rounded px-2 py-1 w-full mb-4"
