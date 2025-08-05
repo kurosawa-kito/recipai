@@ -81,14 +81,35 @@ curl -X POST "http://localhost:8000/analyze" \
   -F "files=@画像2.jpg"
 ```
 
-### 7. よくあるトラブル
+### 7. AI食材検出システム（オプション）
+
+冷蔵庫の画像から食材を自動検出するPythonベースのシステムが利用可能です。
+
+```bash
+# 食材検出システムのディレクトリに移動
+cd python/analyze_image_test
+
+# 自動セットアップ & 実行
+./run_test.sh
+```
+
+詳細な使用方法は [`python/analyze_image_test/README.md`](python/analyze_image_test/README.md) を参照してください。
+
+**特徴:**
+
+- YOLOv8ベースのAIモデル（fridgevision/3）
+- リアルタイム食材検出
+- 検出結果の可視化
+- Next.jsとの統合可能
+
+### 8. よくあるトラブル
 
 - `.env` の設定漏れ
 - DB接続エラー
 - Python仮想環境のアクティベート忘れ
 - パッケージ未インストール
 
-### 8. 参考資料
+### 9. 参考資料
 
 - `PROJECT_OVERVIEW.md`（全体構成）
 - `RECIPE_FLOW.md`（画面・API連携の流れ）
