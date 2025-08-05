@@ -1,0 +1,7 @@
+# 冷蔵庫食材検出テスト用ライブラリ
+roboflow
+inference
+supervision
+opencv-python
+numpy
+Pillow
