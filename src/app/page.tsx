@@ -5,11 +5,11 @@ import HamburgerMenu from "@/components/HamburgerMenu";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
 import { useState } from "react";
+import { appApi } from "@/lib/api";
 
 export default function HomePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [images, setImages] = useState<string[]>(["", "", "", "", ""]);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const router = require("next/navigation").useRouter();
 
@@ -33,23 +33,15 @@ export default function HomePage() {
   // レシピ候補画像を生成APIで取得
   const handleShowRecipes = async () => {
     setModalOpen(true);
-    setLoading(true);
     // 5件分画像生成APIを呼ぶ
     const results = await Promise.all(
       Array(5)
         .fill(0)
         .map(() =>
-          fetch("/api/generate-image", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: "おすすめレシピ" }),
-          })
-            .then((res) => res.json())
-            .then((data) => data.imageUrl)
+          appApi.images.generate("おすすめレシピ").then((data) => data.imageUrl)
         )
     );
     setImages(results);
-    setLoading(false);
   };
 
   return (
@@ -95,11 +87,7 @@ export default function HomePage() {
                   Array.from(files).forEach((file) => {
                     formData.append("files", file);
                   });
-                  const res = await fetch("/api/analyze-image", {
-                    method: "POST",
-                    body: formData,
-                  });
-                  const data = await res.json();
+                  const data = await appApi.images.analyze(formData);
                   // 画像プレビュー（1枚目のみ表示例）
                   const url = URL.createObjectURL(files[0]);
                   setImages((prev) => [url, ...prev.slice(1)]);
@@ -128,14 +116,10 @@ export default function HomePage() {
                   // 1枚ずつblobにアップロード
                   const uploadedUrls: string[] = [];
                   for (const file of Array.from(files)) {
-                    const res = await fetch(
-                      `/api/analyze-image?filename=${encodeURIComponent(file.name)}`,
-                      {
-                        method: "POST",
-                        body: file,
-                      }
+                    const data = await appApi.images.analyzeWithFilename(
+                      file.name,
+                      file
                     );
-                    const data = await res.json();
                     uploadedUrls.push(data.url);
                   }
                   // 画像プレビュー（1枚目のみ表示例）
@@ -328,85 +312,76 @@ export default function HomePage() {
               ×
             </button>
             <h2 className="text-lg font-bold mb-4">おすすめレシピ候補</h2>
-            {loading ? (
-              <div className="text-center py-8">画像生成中...</div>
-            ) : (
-              <div className="w-full overflow-x-auto flex gap-4 pb-2">
-                {images.map((img, i) => (
-                  <div
-                    key={i}
-                    className="min-w-[280px] max-w-[280px] bg-gray-50 border rounded-xl shadow p-4 flex-shrink-0 flex flex-col items-stretch h-[420px]"
-                  >
-                    <div className="h-40 w-full bg-gray-200 rounded mb-3 flex items-center justify-center overflow-hidden">
-                      {img ? (
-                        <img
-                          src={img}
-                          alt={`レシピ${i + 1}`}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        "画像"
-                      )}
-                    </div>
-                    <div className="font-bold text-lg mb-1">
-                      レシピ候補 {i + 1}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      材料例: たまご, 牛乳, トマト
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                      <span>調理時間: 20分</span>
-                      <span>・</span>
-                      <span>難易度: ★★☆</span>
-                    </div>
-                    <div className="text-xs text-gray-400 mb-2">
-                      カロリー: 350kcal
-                    </div>
-                    <div className="text-xs text-gray-700 mb-3 line-clamp-3">
-                      ふわふわ卵とトマトの優しい味わい。忙しい日でも簡単に作れるおすすめレシピです。
-                    </div>
-                    <div className="flex-1" />
-                    <button
-                      className="w-full bg-blue-600 text-white rounded py-2 font-bold hover:bg-blue-700 transition mt-2"
-                      disabled={saving}
-                      onClick={async () => {
-                        setSaving(true);
-                        // セッションCookieからuserId取得
-                        const getUserId = () => {
-                          const match = document.cookie.match(/userId=([^;]+)/);
-                          return match ? match[1] : "";
-                        };
-                        const userId = getUserId();
-                        const recipeData = {
-                          title: `レシピ候補${i + 1}`,
-                          description:
-                            "ふわふわ卵とトマトの優しい味わい。忙しい日でも簡単に作れるおすすめレシピです。",
-                          instructions: "材料を混ぜる。焼く。盛り付ける。",
-                          imageUrl: img,
-                          estimatedTime: "20分",
-                          userId,
-                        };
-                        const res = await fetch("/api/save-recipe", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(recipeData),
-                        });
-                        const data = await res.json();
-                        setSaving(false);
-                        setModalOpen(false);
-                        if (data.id) {
-                          router.push(`/recipes/${data.id}`);
-                        } else {
-                          alert("保存に失敗しました");
-                        }
-                      }}
-                    >
-                      {saving ? "保存中..." : "このレシピを選ぶ"}
-                    </button>
+            <div className="w-full overflow-x-auto flex gap-4 pb-2">
+              {images.map((img, i) => (
+                <div
+                  key={i}
+                  className="min-w-[280px] max-w-[280px] bg-gray-50 border rounded-xl shadow p-4 flex-shrink-0 flex flex-col items-stretch h-[420px]"
+                >
+                  <div className="h-40 w-full bg-gray-200 rounded mb-3 flex items-center justify-center overflow-hidden">
+                    {img ? (
+                      <img
+                        src={img}
+                        alt={`レシピ${i + 1}`}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      "画像"
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="font-bold text-lg mb-1">
+                    レシピ候補 {i + 1}
+                  </div>
+                  <div className="text-xs text-gray-500 mb-1">
+                    材料例: たまご, 牛乳, トマト
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                    <span>調理時間: 20分</span>
+                    <span>・</span>
+                    <span>難易度: ★★☆</span>
+                  </div>
+                  <div className="text-xs text-gray-400 mb-2">
+                    カロリー: 350kcal
+                  </div>
+                  <div className="text-xs text-gray-700 mb-3 line-clamp-3">
+                    ふわふわ卵とトマトの優しい味わい。忙しい日でも簡単に作れるおすすめレシピです。
+                  </div>
+                  <div className="flex-1" />
+                  <button
+                    className="w-full bg-blue-600 text-white rounded py-2 font-bold hover:bg-blue-700 transition mt-2"
+                    disabled={saving}
+                    onClick={async () => {
+                      setSaving(true);
+                      // セッションCookieからuserId取得
+                      const getUserId = () => {
+                        const match = document.cookie.match(/userId=([^;]+)/);
+                        return match ? match[1] : "";
+                      };
+                      const userId = getUserId();
+                      const recipeData = {
+                        title: `レシピ候補${i + 1}`,
+                        description:
+                          "ふわふわ卵とトマトの優しい味わい。忙しい日でも簡単に作れるおすすめレシピです。",
+                        instructions: "材料を混ぜる。焼く。盛り付ける。",
+                        imageUrl: img,
+                        estimatedTime: "20分",
+                        userId,
+                      };
+                      const data = await appApi.saveRecipe(recipeData);
+                      setSaving(false);
+                      setModalOpen(false);
+                      if (data.id) {
+                        router.push(`/recipes/${data.id}`);
+                      } else {
+                        alert("保存に失敗しました");
+                      }
+                    }}
+                  >
+                    {saving ? "保存中..." : "このレシピを選ぶ"}
+                  </button>
+                </div>
+              ))}
+            </div>
             <div className="text-xs text-gray-400 mt-2">
               左右にスライドして選択できます
             </div>

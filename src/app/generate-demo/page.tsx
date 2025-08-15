@@ -1,21 +1,14 @@
 "use client";
 import { useState } from "react";
+import { appApi } from "@/lib/api";
 
 export default function GenerateDemoPage() {
   const [imageUrl, setImageUrl] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleGenerate = async () => {
-    setLoading(true);
     setImageUrl("");
-    const res = await fetch("/api/generate-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: "テスト" }),
-    });
-    const data = await res.json();
+    const data = await appApi.images.generate("テスト");
     setImageUrl(data.imageUrl);
-    setLoading(false);
   };
 
   return (
@@ -24,9 +17,8 @@ export default function GenerateDemoPage() {
       <button
         onClick={handleGenerate}
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4"
-        disabled={loading}
       >
-        {loading ? "生成中..." : "画像生成"}
+        画像生成
       </button>
       {imageUrl && (
         <div className="mt-4">

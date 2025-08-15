@@ -1,19 +1,3 @@
-// ユーザーごとの冷蔵庫の中身（食材リスト）テーブル
-model UserIngredient {
-  id           String     @id @default(cuid())
-  userId       String
-  ingredientId String
-  quantity     String?    // 任意: 分量や個数
-  memo         String?    // 任意: メモや備考
-  updatedAt    DateTime   @updatedAt
-
-  // リレーション
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, ingredientId])
-  @@map("user_ingredients")
-}
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,93 +7,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ユーザーテーブル
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model UserIngredient {
+  id           String     @id @default(cuid())
+  userId       String
+  ingredientId String
+  quantity     String?
+  memo         String?
+  updatedAt    DateTime   @updatedAt
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // リレーション
-  recipes           Recipe[]
-  userIngredients   UserIngredient[]
-  userEvents        UserEvent[]
+  @@unique([userId, ingredientId])
+  @@map("user_ingredients")
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  password            String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  recipeFeedbacks     RecipeFeedback[]
+  recipes             Recipe[]
   shoppingSuggestions ShoppingSuggestion[]
-  recipeFeedbacks   RecipeFeedback[]
+  userEvents          UserEvent[]
+  userIngredients     UserIngredient[]
 
   @@map("users")
 }
 
-// レシピテーブル
 model Recipe {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String
-  description String?
-  instructions String
-  imageUrl    String?
-  estimatedTime String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // リレーション
-  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipeIngredients   RecipeIngredient[]
-  recipeFeedbacks     RecipeFeedback[]
-  recipeTagOnRecipes  RecipeTagOnRecipe[]
-
-  isFavorite Boolean @default(false) // お気に入りフラグ
-  isPublic   Boolean @default(true) // 公開レシピかどうか
-  authorName String? // 公開時に表示する作成者名（ニックネーム等）
+  id                 String              @id @default(cuid())
+  userId             String
+  title              String
+  description        String?
+  instructions       String
+  imageUrl           String?
+  estimatedTime      String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  authorName         String?
+  isFavorite         Boolean             @default(false)
+  isPublic           Boolean             @default(true)
+  recipeFeedbacks    RecipeFeedback[]
+  recipeIngredients  RecipeIngredient[]
+  recipeTagOnRecipes RecipeTagOnRecipe[]
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("recipes")
 }
 
-// 食材マスタテーブル
 model Ingredient {
-  id   String @id @default(cuid())
-  name String @unique
-
-  // リレーション
-  recipeIngredients RecipeIngredient[]
-  userIngredients   UserIngredient[]
-  shoppingSuggestions ShoppingSuggestion[]
+  id                         String                      @id @default(cuid())
+  name                       String                      @unique
   ingredientTagOnIngredients IngredientTagOnIngredient[]
+  recipeIngredients          RecipeIngredient[]
+  shoppingSuggestions        ShoppingSuggestion[]
+  userIngredients            UserIngredient[]
 
   @@map("ingredients")
 }
 
-// レシピと食材の中間テーブル
 model RecipeIngredient {
-  id            String  @id @default(cuid())
-  recipeId      String
-  ingredientId  String
-  quantity      String
-  isUserInput   Boolean @default(false) // ユーザーが手動で追加した食材かどうか
-
-  // リレーション
-  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  recipeId     String
+  ingredientId String
+  quantity     String
+  isUserInput  Boolean    @default(false)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([recipeId, ingredientId])
   @@map("recipe_ingredients")
 }
 
-// --- ここからAI/レコメンド・学習データ蓄積用テーブル ---
-
 /// 買い物提案・リマインダー
 model ShoppingSuggestion {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   userId       String
   ingredientId String
-  reason       String?  // 例: "レシピ推奨", "在庫切れ" など
-  isCompleted  Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  reason       String?
+  isCompleted  Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isCompleted])
   @@map("shopping_suggestions")
@@ -120,12 +102,11 @@ model RecipeFeedback {
   id        String   @id @default(cuid())
   userId    String
   recipeId  String
-  rating    Int?     // 1-5点など
+  rating    Int?
   comment   String?
   createdAt DateTime @default(now())
-
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipe  Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, recipeId])
   @@map("recipe_feedbacks")
@@ -133,21 +114,19 @@ model RecipeFeedback {
 
 /// 食材タグ・カテゴリ（例: 野菜/肉/乳製品/調味料/和風/洋風など）
 model IngredientTag {
-  id   String @id @default(cuid())
-  name String @unique
-
+  id                         String                      @id @default(cuid())
+  name                       String                      @unique
   ingredientTagOnIngredients IngredientTagOnIngredient[]
 
   @@map("ingredient_tags")
 }
 
 model IngredientTagOnIngredient {
-  id            String @id @default(cuid())
-  ingredientId  String
-  tagId         String
-
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  tag        IngredientTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  id           String        @id @default(cuid())
+  ingredientId String
+  tagId        String
+  ingredient   Ingredient    @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  tag          IngredientTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([ingredientId, tagId])
   @@map("ingredient_tag_on_ingredient")
@@ -155,21 +134,19 @@ model IngredientTagOnIngredient {
 
 /// レシピタグ・カテゴリ（例: 和食/洋食/中華/時短/ダイエット/季節/イベントなど）
 model RecipeTag {
-  id   String @id @default(cuid())
-  name String @unique
-
+  id                 String              @id @default(cuid())
+  name               String              @unique
   recipeTagOnRecipes RecipeTagOnRecipe[]
 
   @@map("recipe_tags")
 }
 
 model RecipeTagOnRecipe {
-  id        String @id @default(cuid())
-  recipeId  String
-  tagId     String
-
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  tag    RecipeTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  recipeId String
+  tagId    String
+  recipe   Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag      RecipeTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([recipeId, tagId])
   @@map("recipe_tag_on_recipe")
@@ -179,13 +156,11 @@ model RecipeTagOnRecipe {
 model UserEvent {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // 例: "login", "add_ingredient", "view_recipe" など
-  detail    String?  // 任意: イベントの詳細やパラメータ
+  type      String
+  detail    String?
   createdAt DateTime @default(now())
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
   @@map("user_events")
 }
-

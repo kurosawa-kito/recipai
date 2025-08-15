@@ -27,8 +27,8 @@ function withAuth<T extends {}>(WrappedComponent: ComponentType<T>) {
           <AppHeader />
           <div className="flex-1 flex items-center justify-center pt-14">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">読み込み中...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">認証確認中...</p>
             </div>
           </div>
           <BottomNav />

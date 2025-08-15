@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { appApi } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -8,19 +9,15 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    // API認証
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.ok) {
+    try {
+      // API認証
+      await appApi.auth.login({ email, password });
       // 認証成功: セッション保存はAPI側で
       // 少し待ってからリダイレクト（Cookie設定の反映のため）
       setTimeout(() => {
         window.location.href = "/";
       }, 100);
-    } else {
+    } catch (error) {
       setError("ログインに失敗しました");
     }
   };
