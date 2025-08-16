@@ -110,12 +110,14 @@ export default function AppHeader() {
             <Link href="/" className="py-2 text-gray-700 hover:text-blue-600">
               ホーム
             </Link>
+            {/* 今後のバージョンでリリース予定
             <Link
               href="/search"
               className="py-2 text-gray-700 hover:text-blue-600"
             >
               検索
             </Link>
+            */}
             {isLoggedIn && (
               <>
                 <Link

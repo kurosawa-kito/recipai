@@ -35,14 +35,14 @@ export default function BottomNav() {
   // ログイン前でも使える基本機能
   const basicNavItems = [
     { href: "/", label: "ホーム", icon: "🏠" },
-    { href: "/search", label: "検索", icon: "🔍" },
+    // { href: "/search", label: "検索", icon: "🔍" }, // 今後のバージョンでリリース予定
   ];
 
   // ログイン後の追加機能
   const loggedInNavItems = [
     { href: "/", label: "ホーム", icon: "🏠" },
     { href: "/ingredients", label: "材料", icon: "🥕" },
-    { href: "/search", label: "検索", icon: "🔍" },
+    // { href: "/search", label: "検索", icon: "🔍" }, // 今後のバージョンでリリース予定
     { href: "/history", label: "履歴", icon: "🕑" },
     { href: "/favorites", label: "お気に入り", icon: "❤️" },
   ];
