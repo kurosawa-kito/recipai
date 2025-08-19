@@ -142,7 +142,7 @@ def test_fridge_detection():
     print("=" * 60)
     
     # テスト画像のパスを設定
-    test_images_dir = "/Users/bobsup/Projects/recipai/public/images/analyze_image_test"
+    test_images_dir = "/Users/nguentoan/Projects/recipai/public/images/analyze_image_test"
     
     # テスト画像ディレクトリが存在しない場合は作成
     os.makedirs(test_images_dir, exist_ok=True)

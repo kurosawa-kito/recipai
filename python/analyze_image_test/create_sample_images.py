@@ -56,7 +56,7 @@ def create_sample_fridge_image(save_path: str, width: int = 640, height: int = 4
 
 def create_multiple_samples():
     """複数のテスト用画像を作成"""
-    test_dir = "/Users/bobsup/Projects/recipai/public/images/analyze_image_test"
+    test_dir = "/Users/nguentoan/Projects/recipai/public/images/analyze_image_test"
     os.makedirs(test_dir, exist_ok=True)
     
     samples = [

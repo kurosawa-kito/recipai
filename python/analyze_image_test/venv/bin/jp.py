@@ -1,4 +1,4 @@
-#!/Users/bobsup/Projects/recipai/python/analyze_image_test/venv/bin/python3
+#!/Users/nguentoan/recipai/python/analyze_image_test/venv/bin/python3
 
 import sys
 import json
