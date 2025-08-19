@@ -8,7 +8,8 @@ import os
 import sys
 import cv2
 import numpy as np
-from typing import List, Dict, Any
+import argparse
+from typing import List, Dict, Any, Optional
 
 try:
     from inference import get_model
@@ -22,12 +23,12 @@ except ImportError as e:
 class FridgeDetector:
     """冷蔵庫内食材検出クラス"""
     
-    def __init__(self, api_key: str = "e7869ldGYVI1OHMIBFDz"):
+    def __init__(self, api_key: Optional[str] = None):
+        """Args:
+            api_key: Roboflow API キー（None の場合は環境変数 ROBOFLOW_API_KEY を参照し、なければ既定値を使用）
         """
-        Args:
-            api_key: Roboflow API キー
-        """
-        self.api_key = api_key
+        # 優先順位: 引数 > 環境変数 > 埋め込み既定値
+        self.api_key = api_key or os.environ.get("ROBOFLOW_API_KEY") or "e7869ldGYVI1OHMIBFDz"
         self.model = None
         self.load_model()
     
@@ -135,33 +136,41 @@ class FridgeDetector:
         return save_path
 
 
-def test_fridge_detection():
+def test_fridge_detection(test_images_dir: Optional[str] = None, print_raw: bool = False, print_bboxes: bool = False, api_key: Optional[str] = None) -> bool:
     """テスト実行関数"""
     print("=" * 60)
     print("🧪 冷蔵庫食材検出テスト開始")
     print("=" * 60)
     
-    # テスト画像のパスを設定
-    test_images_dir = "/Users/nguentoan/Projects/recipai/public/images/analyze_image_test"
+    # テスト画像のパスを設定（引数優先）
+    if test_images_dir is None:
+        test_images_dir = "/Users/bobsup/Projects/recipai/public/images/analyze_image_test"
     
     # テスト画像ディレクトリが存在しない場合は作成
     os.makedirs(test_images_dir, exist_ok=True)
     
     # 検出器を初期化
     try:
-        detector = FridgeDetector()
+        detector = FridgeDetector(api_key=api_key)
     except Exception as e:
         print(f"❌ 検出器の初期化に失敗しました: {e}")
         return False
     
     # テスト画像を検索
+    # 対象拡張子（ここに追加すれば拡張できます）
     image_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
     test_images = []
     
-    for ext in image_extensions:
-        for file in os.listdir(test_images_dir):
-            if file.lower().endswith(ext):
-                test_images.append(os.path.join(test_images_dir, file))
+    # ディレクトリ内のファイルをスキャンして対象拡張子と一致するものを収集
+    for file in os.listdir(test_images_dir):
+        if any(file.lower().endswith(ext) for ext in image_extensions):
+            test_images.append(os.path.join(test_images_dir, file))
+    
+    # 使用されるテスト画像一覧を出力（ユーザーが何を使うか一目で分かるようにする）
+    if test_images:
+        print("🔎 使用されるテスト画像一覧:")
+        for p in test_images:
+            print(f"   - {p}")
     
     if not test_images:
         print(f"⚠️  テスト画像が見つかりません: {test_images_dir}")
@@ -191,6 +200,33 @@ def test_fridge_detection():
             else:
                 print("   食材が検出されませんでした")
             
+            # raw 結果を出力するオプション
+            if print_raw:
+                print("🔬 raw_results:")
+                try:
+                    print(result['raw_results'])
+                except Exception as e:
+                    print(f"   (raw 出力に失敗しました: {e})")
+
+            # 各予測の bbox 等を表示するオプション
+            if print_bboxes and hasattr(result['raw_results'], 'predictions'):
+                print("📐 検出ボックス詳細:")
+                for k, pred in enumerate(result['raw_results'].predictions, 1):
+                    # Roboflow の Prediction オブジェクトの持つ属性に合わせて可能な情報を出力
+                    bbox = getattr(pred, "bbox", None)
+                    if bbox and all(hasattr(bbox, attr) for attr in ("x", "y", "width", "height")):
+                        print(f"   {k}. {pred.class_name} (conf={getattr(pred,'confidence',None)}) bbox: x={bbox.x}, y={bbox.y}, w={bbox.width}, h={bbox.height}")
+                    else:
+                        # fallback: 重要な属性を順に出力
+                        info = {}
+                        for a in ("x","y","width","height","confidence","class_name"):
+                            if hasattr(pred, a):
+                                info[a] = getattr(pred, a)
+                        if info:
+                            print(f"   {k}. {info}")
+                        else:
+                            print(f"   {k}. (pred object): {pred}")
+            
             # 注釈付き画像を保存
             annotated_path = detector.annotate_image(
                 image_path,
@@ -207,15 +243,20 @@ def test_fridge_detection():
     print("=" * 60)
     
     return success_count == len(test_images)
-
-
+ 
+ 
 if __name__ == "__main__":
-    # テスト実行
-    success = test_fridge_detection()
-    
-    if success:
-        print("✅ 全てのテストが成功しました！")
-        sys.exit(0)
-    else:
-        print("❌ 一部のテストが失敗しました")
-        sys.exit(1)
+	parser = argparse.ArgumentParser(description="冷蔵庫食材検出テスト実行")
+	parser.add_argument("--dir", "-d", help="テスト画像ディレクトリ (デフォルトを使用する場合は省略)", default=None)
+	parser.add_argument("--api-key", help="Roboflow API キー (省略時は環境変数 ROBOFLOW_API_KEY または埋め込み既定値を使用)", default=None)
+	parser.add_argument("--print-raw", help="raw_results を出力する", action="store_true")
+	parser.add_argument("--print-bboxes", help="各予測の bbox 等の詳細を出力する", action="store_true")
+	args = parser.parse_args()
+
+	success = test_fridge_detection(test_images_dir=args.dir, print_raw=args.print_raw, print_bboxes=args.print_bboxes, api_key=args.api_key)
+	if success:
+		print("✅ 全てのテストが成功しました！")
+		sys.exit(0)
+	else:
+		print("❌ 一部のテストが失敗しました")
+		sys.exit(1)
