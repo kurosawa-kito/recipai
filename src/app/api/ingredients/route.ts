@@ -1,34 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/prismaClient";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 // 食材リストを取得
 export async function GET() {
   try {
-    console.log("食材リストの取得を開始");
-
     const ingredients = await prisma.ingredient.findMany({
       orderBy: { name: "asc" },
     });
 
-    console.log("取得した食材数:", ingredients.length);
     return NextResponse.json({ ingredients });
   } catch (error) {
     console.error("食材リスト取得エラー:", error);
-    
-    const errorMessage = error instanceof Error ? error.message : "不明なエラー";
-    const errorDetails = error instanceof Error ? {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    } : { message: String(error) };
-    
-    console.error("エラーの詳細:", errorDetails);
-    
     return NextResponse.json(
-      { 
-        error: "食材リストの取得に失敗しました",
-        details: errorMessage 
-      },
+      { error: "食材リストの取得に失敗しました" },
       { status: 500 }
     );
   }
@@ -64,14 +50,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("食材リスト保存エラー:", error);
-    
-    const errorMessage = error instanceof Error ? error.message : "不明なエラー";
-    
     return NextResponse.json(
-      { 
-        error: "食材リストの保存に失敗しました",
-        details: errorMessage 
-      },
+      { error: "食材リストの保存に失敗しました" },
       { status: 500 }
     );
   }
