@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/prismaClient";
 
 // テスト用の食材データを追加
 export async function POST() {
@@ -38,8 +36,14 @@ export async function POST() {
     });
   } catch (error) {
     console.error("シードデータ追加エラー:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "不明なエラー";
+    
     return NextResponse.json(
-      { error: "サンプルデータの追加に失敗しました" },
+      { 
+        error: "サンプルデータの追加に失敗しました",
+        details: errorMessage 
+      },
       { status: 500 }
     );
   }
