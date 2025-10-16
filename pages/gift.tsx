@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import Image from "next/image";
-import SparkleEffect from "../src/components/SparkleEffect";
+import SparkleEffect from "@/components/SparkleEffect";
 
 const DISNEY_URL = "https://www.tokyodisneyresort.jp/";
 
