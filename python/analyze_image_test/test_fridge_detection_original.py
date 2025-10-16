@@ -35,8 +35,9 @@ class FridgeDetector:
     def load_model(self):
         """モデルをロード"""
         try:
+            # ここを自分のモデルに変更
             self.model = get_model(
-                model_id="fridgevision/3", 
+                model_id="your-username/your-model-id", 
                 api_key=self.api_key
             )
             print("✅ モデルの読み込みが完了しました")
