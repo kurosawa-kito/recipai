@@ -86,7 +86,7 @@ const DisneyGiftBox = () => {
         {phase === "initial" && (
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-12 animate-pulse">
-              🎁 Special Gift 🎁
+              🎁 Birthday Gift 🎁
             </h1>
 
             <div
@@ -138,6 +138,10 @@ const DisneyGiftBox = () => {
 
         {phase === "interactive" && (
           <div className="text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 animate-pulse">
+              🎉 誕生日おめでとう 🎉
+            </h2>
+
             <div onClick={handleTicketClick} className="cursor-pointer">
               <div className="ticket-card-container relative max-w-2xl">
                 <Image
@@ -150,6 +154,10 @@ const DisneyGiftBox = () => {
                 />
               </div>
             </div>
+
+            <p className="text-white text-2xl mt-8 animate-pulse font-bold">
+              タップして受け取る
+            </p>
 
             <button
               onClick={handleReset}
