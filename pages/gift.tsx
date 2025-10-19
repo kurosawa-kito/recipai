@@ -3,7 +3,8 @@ import { RefreshCw } from "lucide-react";
 import Image from "next/image";
 import SparkleEffect from "@/components/SparkleEffect";
 
-const DISNEY_URL = "https://www.tokyodisneyresort.jp/";
+const DISNEY_URL =
+  "https://contents-portal.tokyodisneyresort.jp/app-link/lp_group_join.html?linkType=groupb8aebd85f31b04859b597884d2af479c1ac9e49fc1acf388e70623655fd9b3db276a223b332e63903c960926231f2228c42d46f4308ce4bb8a5de2dc391e6817";
 
 const DisneyGiftBox = () => {
   const [phase, setPhase] = useState<"initial" | "sparkling" | "interactive">(
