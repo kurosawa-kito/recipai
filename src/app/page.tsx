@@ -90,20 +90,22 @@ export default function HomePage() {
                 onChange={async (e) => {
                   const files = e.target.files;
                   if (!files || files.length === 0) return;
-                  // 複数画像をFormDataでAPIに送信
-                  const formData = new FormData();
-                  Array.from(files).forEach((file) => {
-                    formData.append("files", file);
-                  });
-                  const res = await fetch("/api/analyze-image", {
-                    method: "POST",
-                    body: formData,
-                  });
-                  const data = await res.json();
+                  // 1枚ずつblobにアップロード
+                  const uploadedUrls: string[] = [];
+                  for (const file of Array.from(files)) {
+                    const res = await fetch(
+                      `/api/analyze-image?filename=${encodeURIComponent(file.name)}`,
+                      {
+                        method: "POST",
+                        body: file,
+                      }
+                    );
+                    const data = await res.json();
+                    uploadedUrls.push(data.url);
+                  }
                   // 画像プレビュー（1枚目のみ表示例）
-                  const url = URL.createObjectURL(files[0]);
-                  setImages((prev) => [url, ...prev.slice(1)]);
-                  // 必要に応じてdata.ingredients等を利用
+                  setImages((prev) => [uploadedUrls[0], ...prev.slice(1)]);
+                  // 必要に応じてuploadedUrlsを利用
                 }}
               />
               <button
@@ -152,6 +154,55 @@ export default function HomePage() {
                 写真を選ぶ
               </button>
 
+              {/* デモ用：テスト画像から選ぶ（複数選択可） */}
+              <div className="mb-3">
+                <p className="text-sm text-gray-500 mb-2">
+                  🧪 テスト画像から選ぶ（タップで選択/解除）
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    "/images/analyze_image_test/fridge.jpeg",
+                    "/images/analyze_image_test/110797_01-1.jpg",
+                    "/images/analyze_image_test/21-11-05-ogp.jpg",
+                    "/images/analyze_image_test/img01-1.jpg",
+                  ].map((src, idx) => {
+                    const isSelected = images.includes(src);
+                    return (
+                      <button
+                        key={idx}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition relative ${
+                          isSelected
+                            ? "border-green-500"
+                            : "border-transparent hover:border-gray-300"
+                        }`}
+                        onClick={() => {
+                          if (isSelected) {
+                            // 選択解除
+                            setImages((prev) =>
+                              prev.filter((img) => img !== src)
+                            );
+                          } else {
+                            // 選択追加
+                            setImages((prev) => [...prev.filter(Boolean), src]);
+                          }
+                        }}
+                      >
+                        <img
+                          src={src}
+                          alt={`テスト画像${idx + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                            ✓
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* 選択済み画像のサムネイル表示 */}
               {images.filter(Boolean).length > 0 && (
                 <div className="flex gap-2 mb-3 w-full overflow-x-auto">
@@ -185,12 +236,6 @@ export default function HomePage() {
                 className="border border-primary-600 text-primary-600 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-primary-50 transition-colors"
               >
                 ログインして履歴・お気に入りを見る
-              </Link>
-              <Link
-                href="/generate-demo"
-                className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
-              >
-                デモを見る
               </Link>
             </div>
           </div>
