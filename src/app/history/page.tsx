@@ -1,38 +1,75 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
 import Link from "next/link";
 import withAuth from "@/components/withAuth";
 
+interface Recipe {
+  id: string;
+  title: string;
+  ingredients: string;
+  date: string;
+  isFavorite: boolean;
+}
+
 function HistoryPage() {
   const [keyword, setKeyword] = useState("");
   const [showFavorite, setShowFavorite] = useState(false);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 仮データ
-  const recipes = [
-    {
-      id: 1,
-      title: "レシピタイトル 1",
-      ingredients: "たまご, 牛乳, トマト",
-      date: "2025/07/19",
-      isFavorite: true,
-    },
-    {
-      id: 2,
-      title: "レシピタイトル 2",
-      ingredients: "鶏肉, ねぎ",
-      date: "2025/07/18",
-      isFavorite: false,
-    },
-  ];
-  const filtered = recipes.filter(
-    (r) =>
-      (!showFavorite || r.isFavorite) &&
-      (keyword === "" ||
-        r.title.includes(keyword) ||
-        r.ingredients.includes(keyword))
-  );
+  const fetchRecipes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (showFavorite) params.set("favorite", "true");
+      if (keyword.trim()) params.set("keyword", keyword.trim());
+
+      const res = await fetch(`/api/recipes?${params.toString()}`);
+      if (!res.ok) {
+        if (res.status === 401) {
+          setError("ログインが必要です");
+          return;
+        }
+        throw new Error("取得に失敗しました");
+      }
+      const data = await res.json();
+      setRecipes(data.recipes || []);
+    } catch (err) {
+      setError("レシピの取得に失敗しました");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [showFavorite, keyword]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchRecipes();
+    }, 300); // debounce keyword search
+    return () => clearTimeout(timer);
+  }, [fetchRecipes]);
+
+  const handleToggleFavorite = async (recipeId: string) => {
+    try {
+      const res = await fetch(`/api/recipes/${recipeId}/favorite`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        setRecipes((prev) =>
+          prev.map((r) =>
+            r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r
+          )
+        );
+      }
+    } catch (err) {
+      console.error("お気に入り更新に失敗しました", err);
+    }
+  };
+
   return (
     <main className="flex flex-col min-h-screen pb-16 bg-white">
       <AppHeader />
@@ -52,26 +89,45 @@ function HistoryPage() {
             ★ お気に入り
           </button>
         </div>
-        <ul className="space-y-4">
-          {filtered.map((r) => (
-            <li key={r.id} className="border rounded p-4 bg-white shadow-sm">
-              <div className="font-bold flex items-center gap-2">
-                {r.title}
-                {r.isFavorite && <span className="text-yellow-400">★</span>}
-              </div>
-              <div className="text-sm text-gray-500">
-                材料例: {r.ingredients}
-              </div>
-              <div className="text-gray-400 text-xs mt-2">{r.date}</div>
-              <Link
-                href={`/recipes/${r.id}`}
-                className="text-blue-500 hover:underline mt-2 block"
-              >
-                詳細を見る
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-400 mb-4"></div>
+            <p className="text-gray-500">読み込み中...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">{error}</div>
+        ) : recipes.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            {showFavorite ? "お気に入りレシピがありません" : "履歴がありません"}
+          </div>
+        ) : (
+          <ul className="space-y-4">
+            {recipes.map((r) => (
+              <li key={r.id} className="border rounded p-4 bg-white shadow-sm">
+                <div className="font-bold flex items-center gap-2">
+                  {r.title}
+                  <button
+                    onClick={() => handleToggleFavorite(r.id)}
+                    className={`text-xl ${r.isFavorite ? "text-yellow-400" : "text-gray-300"} hover:scale-110 transition-transform`}
+                  >
+                    ★
+                  </button>
+                </div>
+                <div className="text-sm text-gray-500">
+                  材料: {r.ingredients}
+                </div>
+                <div className="text-gray-400 text-xs mt-2">{r.date}</div>
+                <Link
+                  href={`/recipes/${r.id}`}
+                  className="text-blue-500 hover:underline mt-2 block"
+                >
+                  詳細を見る
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <BottomNav />
     </main>
