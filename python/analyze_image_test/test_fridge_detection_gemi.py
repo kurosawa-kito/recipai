@@ -14,6 +14,13 @@ import json
 import argparse
 from typing import List, Dict, Any, Optional
 
+# .envファイルから環境変数を読み込む
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenvがなくてもシェルの環境変数は使える
+
 try:
     import google.generativeai as genai
     from google.api_core.exceptions import ServiceUnavailable
@@ -59,9 +66,12 @@ class GeminiFridgeDetector:
         # 優先順位: 引数 > 環境変数
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not self.api_key:
-            # デモ用に提供されたキーをフォールバックとして使用
-            self.api_key = "AIzaSyAJKlM5SpFtiDBdBcAkP84v7wiB7m3wSkw"
-            print("⚠️  APIキーが引数または環境変数で指定されていません。デモ用のキーを使用します。")
+            raise ValueError(
+                "APIキーが指定されていません。\n"
+                "以下のいずれかの方法で指定してください:\n"
+                "  1. コマンドライン引数: --api-key YOUR_API_KEY\n"
+                "  2. 環境変数: export GEMINI_API_KEY=YOUR_API_KEY"
+            )
 
         self.model = None
         self._check_network()
@@ -265,12 +275,6 @@ if __name__ == "__main__":
         help="Google Gemini API キー (省略時は環境変数 GEMINI_API_KEY を使用)"
     )
     args = parser.parse_args()
-
-    # 環境変数にAPIキーを設定する例
-    # ユーザーがコマンドラインで指定しない場合、このキーが使われる
-    if not args.api_key and not os.environ.get("GEMINI_API_KEY"):
-        print("🔑 環境変数 `GEMINI_API_KEY` を設定します。")
-        os.environ["GEMINI_API_KEY"] = "AIzaSyDOFONEB_t5Mf42k2MFmEy2ZxtI-tL4bBw"
 
     result = test_fridge_detection_gemini(test_images_dir=args.dir, api_key=args.api_key)
     

@@ -5,3 +5,5 @@ supervision
 opencv-python
 numpy
 Pillow
+google-generativeai
+python-dotenv
