@@ -1,27 +1,34 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    // API認証
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.ok) {
-      // 認証成功: セッション保存はAPI側で
-      // 少し待ってからリダイレクト（Cookie設定の反映のため）
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    } else {
-      setError("ログインに失敗しました");
+    setLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("メールアドレスまたはパスワードが正しくありません");
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch {
+      setError("ログイン中にエラーが発生しました");
+    } finally {
+      setLoading(false);
     }
   };
   const defaultEmail = "test@example.com";
@@ -74,9 +81,10 @@ export default function LoginPage() {
         )}
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          disabled={loading}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
         >
-          ログイン
+          {loading ? "ログイン中..." : "ログイン"}
         </button>
       </form>
       <p className="mt-4 text-sm text-center text-gray-500">

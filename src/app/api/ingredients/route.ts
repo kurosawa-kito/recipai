@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/prismaClient";
 
 // ユーザーの材料リストを取得
 export async function GET() {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
@@ -49,7 +50,7 @@ export async function GET() {
 // 材料リストを保存・更新
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }

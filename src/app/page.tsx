@@ -3,32 +3,22 @@ import Link from "next/link";
 import { Camera, ChefHat, Heart, Sparkles } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function HomePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [modalOpen, setModalOpen] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [recipeImages, setRecipeImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [detectedIngredients, setDetectedIngredients] = useState<string[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [analyzeStatus, setAnalyzeStatus] = useState<string>("");
 
-  // ログイン状態を確認（シンプルにAPIで確認）
-  useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        const res = await fetch("/api/ingredients");
-        setIsLoggedIn(res.status !== 401);
-      } catch {
-        setIsLoggedIn(false);
-      }
-    };
-    checkLogin();
-  }, []);
+  const isLoggedIn = status === "authenticated";
 
   // 画像から材料を解析
   const analyzeIngredients = async (imageUrls: string[]) => {

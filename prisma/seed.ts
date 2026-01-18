@@ -1,14 +1,30 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
 const prisma = new PrismaClient();
 
 async function main() {
+  // パスワードをハッシュ化
+  const hashedPassword1 = await bcrypt.hash("password", 10);
+  const hashedPassword2 = await bcrypt.hash("123456", 10);
+
   // ユーザー作成
   const user = await prisma.user.upsert({
     where: { email: "test@example.com" },
-    update: {},
+    update: { password: hashedPassword1 },
     create: {
       email: "test@example.com",
-      password: "password",
+      password: hashedPassword1,
+    },
+  });
+
+  // ユーザー2作成
+  await prisma.user.upsert({
+    where: { email: "user@example.com" },
+    update: { password: hashedPassword2 },
+    create: {
+      email: "user@example.com",
+      password: hashedPassword2,
     },
   });
 
